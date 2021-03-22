@@ -1,8 +1,6 @@
 package BigTextFileSorter;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,7 +16,7 @@ public class BigTextFileSorter {
         int partsCount = 6;
         long partSize = fileSize / partsCount;
 
-        List<Path> tempFiles = new ArrayList<>();
+        List<String> tempFiles = new ArrayList<>();
         Queue<String[]> queue = new ArrayDeque<>();
         long currentOffset = 0;
         int counter = 0;
@@ -33,12 +31,12 @@ public class BigTextFileSorter {
 
             if(queue.size() >= 2) {
                 Path tmpFilePath = Paths.get(tmpFileNameTemplate + counter++);
-                tempFiles.add(tmpFilePath);
+                tempFiles.add(tmpFilePath.toString());
                 mergeSortingToFile(tmpFilePath, queue.poll(), queue.poll());
             }
             else if(fileReadResult.isEOF()) {
                 Path tmpFilePath = Paths.get(tmpFileNameTemplate + counter++);
-                tempFiles.add(tmpFilePath);
+                tempFiles.add(tmpFilePath.toString());
                 writeStringsToFile(tmpFilePath, Arrays.asList(queue.poll()));
             }
 
@@ -47,25 +45,66 @@ public class BigTextFileSorter {
 
         System.out.println(tempFiles.toString());
 
-        String[] parts = (String[]) tempFiles.toArray();
+        String[] parts = tempFiles.toArray(new String[tempFiles.size()]);
         Queue<String> fileQueue = new ArrayDeque<>();
+        List<String> newPartsList = new ArrayList<>();
+        counter = 0;
         for (int i = 0; i < parts.length; i++) {
-            List<String> newPartsList = new ArrayList<>();
+
             fileQueue.add(parts[i]);
 
             if(fileQueue.size() == 2) {
-
+                String tmpFilePath = tmpFileNameTemplate + "0" + counter++;
+                fileToFileMergeSorting(tmpFilePath, fileQueue.poll(), fileQueue.poll());
+                newPartsList.add(tmpFilePath);
             }
+            else if(i == parts.length -1)
+                newPartsList.add(fileQueue.poll());
 
             if(parts.length == 1)
                 break;
-            else
-                parts = (String[]) newPartsList.toArray();
+            if(i == parts.length -1) {
+                parts = newPartsList.toArray(new String[newPartsList.size()]);
+                i = -1;
+            }
         }
 
     }
 
-    private static void fileToFileSorting(Path newFilename, Path f1, Path f2) {
+    private static void fileToFileMergeSorting(String newFilename, String f1, String f2) {
+
+        try(
+            BufferedReader reader1 = new BufferedReader(new FileReader(f1));
+            BufferedReader reader2 = new BufferedReader(new FileReader(f2));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(newFilename))) {
+
+            String s1 = "";
+            String s2 = "";
+            boolean s1Read = true;
+            boolean s2Read = true;
+
+            while (reader1.ready() || reader2.ready()) {
+                if(reader1.ready() && (s1Read || !reader2.ready()))
+                    s1 = reader1.readLine();
+                if(reader2.ready() && (s2Read || !reader1.ready()))
+                    s2 = reader2.readLine();
+
+                if(reader1.ready() && reader2.ready()) {
+                    if (s1.compareTo(s2) < 0) {
+                        writer.write(s1 + System.lineSeparator());
+                        s1Read = true;
+                        s2Read = false;
+                    } else {
+                        writer.write(s2 + System.lineSeparator());
+                        s1Read = false;
+                        s2Read = true;
+                    }
+                }
+            }
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
 
     }
 
