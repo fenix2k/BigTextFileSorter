@@ -1,3 +1,5 @@
+package BigTextFileGenerator;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Random;
@@ -10,6 +12,8 @@ public class BigTextFileGenerator {
 
     public static void main(String[] args) {
 
+        String filepath = "_testdata/testfile4.txt";
+
         String alphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 + "abcdefghijklmnopqrstuvxyz"
                 + "0123456789";
@@ -20,7 +24,7 @@ public class BigTextFileGenerator {
         System.out.println("Start");
         long startTime = System.currentTimeMillis();
 
-        try (FileWriter fileWriter = new FileWriter("testfile4.txt")) {
+        try (FileWriter fileWriter = new FileWriter(filepath)) {
             int k = 0;
             for (int i = 0; i < linesCount; i++) {
                 long lineLength = (long) ((Math.random() * (maxLineLength - minLineLength)) + minLineLength);
@@ -32,7 +36,6 @@ public class BigTextFileGenerator {
 
                 line.append(System.lineSeparator());
                 k++;
-                //fileWriter.write(line.toString());
                 if (k == 100 || i == linesCount - 1) {
                     fileWriter.write(line.toString());
                     k = 0;
@@ -47,6 +50,5 @@ public class BigTextFileGenerator {
 
         System.out.println("Work time: " + (endTime - startTime) + " ms");
 
-        return;
     }
 }

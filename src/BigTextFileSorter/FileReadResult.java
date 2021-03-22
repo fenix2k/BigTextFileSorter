@@ -1,3 +1,5 @@
+package BigTextFileSorter;
+
 public class FileReadResult {
     private final String[] strings;
     private final long offset;
