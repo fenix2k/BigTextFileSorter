@@ -5,6 +5,7 @@ mvnw
 mvnw.cmd
 _testdata
 out
+bigfile*
 
 cookie.txt
 ### IntelliJ IDEA ###
