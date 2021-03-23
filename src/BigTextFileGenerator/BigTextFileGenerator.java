@@ -6,13 +6,13 @@ import java.util.Random;
 
 public class BigTextFileGenerator {
 
-    private static int minLineLength = 10;
-    private static int maxLineLength = 10;
-    private static long linesCount = 10;
+    private static int minLineLength = 100;
+    private static int maxLineLength = 100;
+    private static long linesCount = 10000000;
 
     public static void main(String[] args) {
 
-        String filepath = "_testdata/testfile4.txt";
+        String filepath = "_testdata/testfile2.txt";
 
         String alphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 + "abcdefghijklmnopqrstuvxyz"
