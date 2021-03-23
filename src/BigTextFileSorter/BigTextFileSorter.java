@@ -8,27 +8,54 @@ import java.util.*;
 
 public class BigTextFileSorter {
 
-    public static long MAX_PART_SIZE = 1024*1024*1024/4;
-    public static String tmdDir = "_testdata/";
+    public static long MAX_PART_SIZE = 1024 * 1024 * 1024 / 2;
+    public static String tmdDir = "";
     public static String tmpFileNameTemplate = Paths.get(tmdDir, "tmpfile.tmp").toString();
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
+        String filename = tmdDir + "bigfile.txt";
 
-        String filename = tmdDir + "testfile2.txt";
-        String outputFilename = tmdDir + "testfile-out2.txt";
+        if(args.length > 0)
+            filename = args[0];
 
+        if(!Files.exists(Paths.get(filename))) {
+            System.out.println("File does not exists");
+            return;
+        }
+
+        String outputFilename = appendToFilename(filename, "out");
         System.out.println("Start sorting file " + filename);
 
-        long fileSize = Files.size(Paths.get(filename));
+        /*long fileSize = Files.size(Paths.get(filename));
         int partsCount = 6;
-        long maxPartSize = fileSize / partsCount;
-
-        List<String> fileList = splitBigTextFileAndSort(filename, MAX_PART_SIZE);
+        long maxPartSize = fileSize / partsCount;*/
         //List<String> fileList = splitBigTextFileAndSort(filename, maxPartSize);
 
-        String outputfile = mergeFilesWithSorting(fileList, outputFilename);
+        try {
+            List<String> fileList = splitBigTextFileAndSort(filename, MAX_PART_SIZE);
+            String outputfile = mergeFilesWithSorting(fileList, outputFilename);
+            System.out.println("Finished! Result file is " + outputfile);
+        } catch (IOException ex) {
+            System.out.println("An error occurred during execution: " + ex.getMessage());
+        }
 
-        System.out.println("Finished! Result file is " + outputfile);
+    }
+
+    private static String appendToFilename(String filepath, String suffix) {
+        Path path = Paths.get(filepath);
+        Path p = path.getParent();
+
+        String path1 = "";
+        if (p != null)
+            path1 = p.toString();
+
+        String filename = path.getFileName().toString();
+
+        String[] pair = filename.split("\\.");
+        if(pair.length == 2)
+            return Paths.get(path1, pair[0] + "-" + suffix + "." + pair[1]).toString();
+        else
+            return Paths.get(path1, pair[0] + "-" + suffix).toString();
     }
 
     /**
@@ -75,11 +102,11 @@ public class BigTextFileSorter {
                 i = -1;
             }
         }
-        if(parts.length == 0)
+        if (parts.length == 0)
             return "";
 
         Path file = Paths.get(outputFile);
-        if(Files.exists(file))
+        if (Files.exists(file))
             Files.delete(file);
         System.out.println("Finish merging files");
         System.out.println("Rename result file to " + file);
@@ -89,15 +116,14 @@ public class BigTextFileSorter {
     /**
      * Разбивает текстовый файл на parts частей и сортирует их содержимое
      *
-     * @param filepath путь к текстовому файлу
+     * @param filepath    путь к текстовому файлу
      * @param maxPartSize максимальный размер части
      * @return список файлов
      * @throws IOException
      */
-    private static List<String> splitBigTextFileAndSort(String filepath, long maxPartSize) throws IOException {
-
-        long partSize = maxPartSize/2;
-
+    private static List<String> splitBigTextFileAndSort(String filepath, long maxPartSize)
+            throws IOException {
+        long partSize = maxPartSize / 2;
         List<String> fileList = new ArrayList<>();
         Queue<String[]> queue = new ArrayDeque<>();
 
@@ -105,7 +131,7 @@ public class BigTextFileSorter {
         int counter = 0;
 
         System.out.println("Start to splitting big file " + filepath);
-        System.out.println("Max size part of file is " + (partSize/1024/1024) * 2 + " Mb");
+        System.out.println("Max size part of file is " + (partSize / 1024 / 1024) * 2 + " Mb");
 
         while (true) {
 
@@ -145,13 +171,13 @@ public class BigTextFileSorter {
     private static void arrayMergeSortingToFile(String filepath, String[] s1, String[] s2)
             throws IOException {
 
-        if (s1 == null || s1.length == 0)
-            if (s2 != null)
-                Files.write(Paths.get(filepath), Arrays.asList(s2));
-        if (s2 == null || s2.length == 0)
-            Files.write(Paths.get(filepath), Arrays.asList(s1));
-
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filepath))) {
+            if (s1 == null || s1.length == 0)
+                if (s2 != null)
+                    Files.write(Paths.get(filepath), Arrays.asList(s2));
+            if (s2 == null || s2.length == 0)
+                Files.write(Paths.get(filepath), Arrays.asList(s1));
+
             long length = s1.length + s2.length;
 
             int i = 0;
@@ -173,6 +199,8 @@ public class BigTextFileSorter {
                     j++;
                 }
             }
+        } catch (IOException ex) {
+            throw new IOException("Error writing to disk", ex);
         }
     }
 
@@ -184,8 +212,8 @@ public class BigTextFileSorter {
      * @param f1          путь к первому отсортированному текстовому файлу
      * @param f2          путь ко второму отсортированному текстовому файлу
      */
-    private static void fileToFileMergeSorting(String newFilename, String f1, String f2) {
-
+    private static void fileToFileMergeSorting(String newFilename, String f1, String f2)
+            throws IOException {
         try (
                 BufferedReader reader1 = new BufferedReader(new FileReader(f1));
                 BufferedReader reader2 = new BufferedReader(new FileReader(f2));
@@ -219,7 +247,7 @@ public class BigTextFileSorter {
             }
 
         } catch (IOException ex) {
-            ex.printStackTrace();
+            throw new IOException("Error writing to disk", ex);
         }
 
     }
@@ -227,20 +255,22 @@ public class BigTextFileSorter {
     /**
      * Читает length байт текстового файла начиная с offset и преобразует в массив строк.
      *
-     * @param filepath   путь к текстовому файлу
-     * @param offset откуда начинать читать в байтах
-     * @param length сколько читать в байтах
+     * @param filepath путь к текстовому файлу
+     * @param offset   откуда начинать читать в байтах
+     * @param length   сколько читать в байтах
      * @return FileReadResult. Обёртка содержить массив строк, текущее смещение, признак конца файла.
      */
-    private static FileReadResult readFile(String filepath, long offset, long length) {
-
+    private static FileReadResult readFile(String filepath, long offset, long length)
+            throws IOException {
         try (RandomAccessFile file = new RandomAccessFile(filepath, "r");) {
-            long lastOffset;
             boolean isEOF = false;
 
             file.seek(offset);
 
-            byte[] buffer = new byte[(int) length + 1];
+            if (file.getFilePointer() + length > file.length())
+                length = file.length() - file.getFilePointer();
+
+            byte[] buffer = new byte[(int) length];
             file.read(buffer, 0, (int) length);
 
             String[] stringList = new String(buffer).split(System.lineSeparator());
@@ -249,17 +279,16 @@ public class BigTextFileSorter {
                 file.seek(offset + length - stringList[stringList.length - 1].getBytes().length + 1);
                 stringList[stringList.length - 1] = file.readLine();
             }
-            lastOffset = file.getFilePointer();
+            long lastOffset = file.getFilePointer();
             if (lastOffset == file.length())
                 isEOF = true;
 
             return new FileReadResult(stringList, lastOffset, isEOF);
 
         } catch (IOException ex) {
-            ex.printStackTrace();
+            throw new IOException("Error writing to disk", ex);
         }
 
-        return null;
     }
 
 

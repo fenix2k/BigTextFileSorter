@@ -6,16 +6,28 @@ import java.util.Random;
 
 public class BigTextFileGenerator {
 
-    private static int minLineLength = 100;
+    private static int minLineLength = 1;
     private static int maxLineLength = 100;
     private static long linesCount = 10000000;
 
     public static void main(String[] args) {
 
-        String filepath = "_testdata/testfile2.txt";
+        if(args.length > 1) {
+            linesCount = Integer.parseInt(args[0]);
+            maxLineLength = Integer.parseInt(args[1]);
+        }
+        if(linesCount <= 0) {
+            System.out.println("Lines count must be > 0");
+            return;
+        }
+        if(maxLineLength <= 0) {
+            System.out.println("Max line length must be > 0");
+            return;
+        }
 
-        String alphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                + "abcdefghijklmnopqrstuvxyz"
+        String filepath = "bigfile.txt";
+
+        String alphaNumericString = "abcdefghijklmnopqrstuvxyz"
                 + "0123456789";
 
         StringBuilder line = new StringBuilder();
@@ -28,7 +40,7 @@ public class BigTextFileGenerator {
             int k = 0;
             for (int i = 0; i < linesCount; i++) {
                 long lineLength = (long) ((Math.random() * (maxLineLength - minLineLength)) + minLineLength);
-                //line.setLength(0);
+
                 random
                         .ints(0, alphaNumericString.length())
                         .limit(lineLength)
