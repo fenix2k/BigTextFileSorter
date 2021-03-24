@@ -8,19 +8,19 @@ public class BigTextFileGenerator {
 
     private static int minLineLength = 1;
     private static int maxLineLength = 100;
-    private static long linesCount = 10000000;
+    private static long linesCount = 40000000;
 
     public static void main(String[] args) {
 
-        if(args.length > 1) {
+        if (args.length > 1) {
             linesCount = Integer.parseInt(args[0]);
             maxLineLength = Integer.parseInt(args[1]);
         }
-        if(linesCount <= 0) {
+        if (linesCount <= 0) {
             System.out.println("Lines count must be > 0");
             return;
         }
-        if(maxLineLength <= 0) {
+        if (maxLineLength <= 0) {
             System.out.println("Max line length must be > 0");
             return;
         }
